@@ -1,0 +1,25 @@
+{
+    "name": "hatur/sso",
+    "description": "login menggunakan sso sendiri",
+    "type": "library",
+    "license": "MIT",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Bangsamu\\Sso\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Bangsamu\\Sso\\Providers\\SsoPackageServiceProvider"
+            ]
+        }
+    },
+    "authors": [
+        {
+            "name": "infomediaku.com",
+            "email": "hatur.cms@gmail.com"
+        }
+    ]
+}
