@@ -1,5 +1,5 @@
 {
-    "name": "hatur/sso",
+    "name": "bangsamu/sso",
     "description": "login menggunakan sso sendiri",
     "type": "library",
     "license": "MIT",
@@ -12,7 +12,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Bangsamu\\Sso\\Providers\\SsoPackageServiceProvider"
+                "Bangsamu\\Sso\\SsoPackageServiceProvider"
             ]
         }
     },

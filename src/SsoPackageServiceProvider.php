@@ -1,6 +1,6 @@
 <?php
 
-namespace Bangsamu\Sso\Providers;
+namespace Bangsamu\Sso;
 
 use Illuminate\Support\ServiceProvider;
 
