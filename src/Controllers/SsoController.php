@@ -263,13 +263,14 @@ class SsoController extends Controller
         $key = base64_decode(config('SsoConfig.main.KEY'));
         $fromKey = $key;
         $cipher = "AES-256-CBC"; //or AES-128-CBC if you prefer
+        $credentials_string = serialize($credentials);
 
         try {
             //Create two encrypters using different keys for each
             $encrypterFrom = new Encrypter($fromKey, $cipher);
-            $token = $request->token ?? $encrypterFrom->encryptString($request->string ?? $credentials['id']);
-
+            $token = $request->token ?? $encrypterFrom->encryptString($request->string ?? $credentials_string);
             $decryptedFromString = $encrypterFrom->decryptString($token);
+            $decryptedFromString = unserialize($decryptedFromString);
 
             $return['token'] = $token;
             $return['decryptedFromString'] = $decryptedFromString;
@@ -405,9 +406,14 @@ class SsoController extends Controller
 
     public function sessionSet($token)
     {
-        dd('ada bug karena ganti auto login pakek email, solve cari id by email untuk dapat id');
         try {
-            $user_id =  $token ? Crypt::decryptString($token) : null;
+            // $user_id =  $token ? Crypt::decryptString($token) : null;
+            $request = new Request([
+                'token'   => $token,
+            ]);
+            $token = $request->token ? self::token($request) : false;
+            $user = $token['decryptedFromString'];
+            $loginbyId = user::where('email', $user['email'])->first();
         } catch (\Exception $e) {
             $data['status'] =   'gagal';
             $data['code'] =   101;
@@ -415,9 +421,9 @@ class SsoController extends Controller
             return self::setOutput($data);
         }
 
-
         $route = 'home';
-        if ($user_id) {
+        if ($loginbyId) {
+            $user_id =  $loginbyId->id;
             // Manually Logging a user (Here is successfully recieve the user id)
             $loggedInUser = \Auth::loginUsingId($user_id);
 
