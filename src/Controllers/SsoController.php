@@ -339,14 +339,21 @@ class SsoController extends Controller
         return $respond;
     }
 
-    // public function auth($email, $password)
     public function auth(Request $request, $credentials = [])
     {
+        $data = $request->all();
         /*internal cek DB user by token user id ada bug kalo user_status tidak sync ke sso*/
         $token = $request->token ? self::sessionSet($request->token) : false;
         // dd($token);
         // $this->auth($request,['email'=>'2','password'=>2]);
         // dd($credentials);
+
+        $email = $data['email'];
+        $user = user::where('email', $email)->first()->toArray();
+        if ($request->hasSession()) {
+            $request->session()->put('auth.user', $user);
+        }
+
         if (empty($token)) {
 
             $credentials = !empty($credentials) ? $credentials : $request->all();
@@ -378,6 +385,8 @@ class SsoController extends Controller
 
             if ($response->ok()) {
                 $data = $response->object();
+                $token =  $data->data->token;
+                $request->session()->put('auth.token', $token);
                 $respond =  self::ssoRespond($response);
             } else {
                 $data = $response->object();
@@ -389,6 +398,7 @@ class SsoController extends Controller
             // dd( $response->body());
             return $respond;
         } else {
+            $request->session()->put('auth.token', $token);
             return $token;
         }
     }
