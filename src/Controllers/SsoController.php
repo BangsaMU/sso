@@ -319,6 +319,13 @@ class SsoController extends Controller
         Log::info('user: sys url: ' . url()->current() . ' message: SSO login request :' . json_encode($data));
 
         if ($response->ok()) {
+            $token = $data['token'];
+            $email = $data['email'];
+            $user = user::where('email', $email)->first()->toArray();
+            if ($request->hasSession()) {
+                $request->session()->put('auth.token', $token);
+                $request->session()->put('auth.user', $user);
+            }
             $data = $response->object();
             $respond =  self::ssoRespond($response);
         } else {
