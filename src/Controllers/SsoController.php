@@ -349,7 +349,7 @@ class SsoController extends Controller
         // dd($credentials);
 
         $email = $data['email'];
-        $user = user::where('email', $email)->first()->toArray();
+        $user = user::where('email', $email)->first();
         if ($request->hasSession()) {
             $request->session()->put('auth.user', $user);
         }
