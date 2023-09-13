@@ -321,7 +321,7 @@ class SsoController extends Controller
         if ($response->ok()) {
             $token = $data['token'];
             $email = $data['email'];
-            $user = user::where('email', $email)->first()->toArray();
+            $user = user::where('email', $email)->first();
             if ($request->hasSession()) {
                 $request->session()->put('auth.token', $token);
                 $request->session()->put('auth.user', $user);
