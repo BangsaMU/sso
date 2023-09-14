@@ -282,7 +282,8 @@ class SsoController extends Controller
         return $return;
     }
 
-    public function forgot(Request $request){
+    public function forgot(Request $request)
+    {
 
         $data = $request->all();
         $data['app_url'] = url('/');
@@ -385,8 +386,10 @@ class SsoController extends Controller
 
             if ($response->ok()) {
                 $data = $response->object();
-                $token =  $data->data->token;
-                $request->session()->put('auth.token', $token);
+                if ($data->code == '200') {
+                    $token =  $data->data->token;
+                    $request->session()->put('auth.token', $token);
+                }
                 $respond =  self::ssoRespond($response);
             } else {
                 $data = $response->object();
