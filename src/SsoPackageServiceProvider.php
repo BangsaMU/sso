@@ -29,5 +29,13 @@ class SsoPackageServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/sso'),
         ]);
+
+        // $this->publishes([
+        //     __DIR__.'/../resources/views/' => resource_path('views/adminlte/auth/login.blade.php'),
+        // ]);
+
+        $this->publishes([
+            __DIR__.'/routes.php' => base_path('routes/sso.php'),
+        ]);
     }
 }

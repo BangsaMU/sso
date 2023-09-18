@@ -19,12 +19,14 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 
 
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\FacadesAuth;
 use App\Models\Session;
 
 use Illuminate\Encryption\Encrypter;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+
+use Illuminate\Support\Facades\Auth;
 
 class SsoController extends Controller
 {
@@ -432,8 +434,10 @@ class SsoController extends Controller
                 'token'   => $token,
             ]);
             $token = $request->token ? self::token($request) : false;
-            $user = $token['decryptedFromString'];
-            $loginbyId = user::where('email', $user['email'])->first();
+            // dd($token);
+            // bagas.setyonugroho@meindo.com
+            $user = @(object)$token['decryptedFromString'];
+            $loginbyId = user::where('email', $user->email)->first();
         } catch (\Exception $e) {
             $data['status'] =   'gagal';
             $data['code'] =   101;
@@ -445,35 +449,47 @@ class SsoController extends Controller
         if ($loginbyId) {
             $user_id =  $loginbyId->id;
             // Manually Logging a user (Here is successfully recieve the user id)
-            $loggedInUser = \Auth::loginUsingId($user_id);
-
+            $loggedInUser = Auth::loginUsingId($user_id);
+            // dd($loggedInUser);
             if (!$loggedInUser || $loggedInUser->is_active == 0) {
-                // If User not logged in, then Throw exception
-                // throw new Exception('Single SignOn: User Cannot be Signed In');
-                // dd('Single SignOn: User Cannot be Signed In');
-
-                $data['status'] =   'gagal';
-                $data['code'] =   101;
-                $data['data'] =   'Single SignOn: User Cannot be Signed In';
-                return self::setOutput($data);
-                // return false;
+                // $data['id'] = $user->id;
+                $data['name'] = $user->name;
+                $data['email'] = $user->email;
+                $data['is_active'] = $user->is_active;
+                $data['password'] = \Hash::make($request->password);
+                // $register = new RegisterController;
+                $create_user = self::create($data);
+                if ($create_user) {
+                    $user_id =  $create_user->id;
+                    Auth::loginUsingId($user_id);
+                } else {
+                    //reset password
+                    $response = 'Your account has not been registered, please contact the administrator';
+                    abort(403, $response);
+                }
             }
             $redirectTo = '/' . $route;
-            // dd($redirectTo,$loggedInUser->toArray(),1,$id);
+            // dd($redirectTo,$loggedInUser->toArray(),1);
             return redirect($redirectTo);
             // return $redirectTo;
+            // return true;
         } else {
-            return 'gagal';
+            $data['status'] =   'gagal';
+            $data['code'] =   101;
+            $data['data'] =   'Single SignOn: User Cannot be Signed In';
+            return self::setOutput($data);
         }
     }
 
     public function sessionCek(Request $request)
     {
-        $user = \Auth::check();
+        $user = Auth::check();
         if ($user) {
-            $data['data'] =   \Auth::user()->toArray();
+            $data['data'] =   Auth::user()->toArray();
         } else {
-            $data['data'] = [];
+            $data['status'] =   'gagal';
+            $data['code'] =   101;
+            $data['data'] =   'Single SignOn: User not Signed In';
         }
         return self::setOutput($data);
     }
@@ -497,7 +513,7 @@ class SsoController extends Controller
         }
         // dd($user_id);
 
-        if (\Auth::id() == $user_id) {
+        if (Auth::id() == $user_id) {
             $route = 'login';
             $session = session::where('user_id', $user_id)->delete();
             $redirectTo = '/' . $route;
