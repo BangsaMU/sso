@@ -425,6 +425,40 @@ class SsoController extends Controller
     }
 
 
+    public function setPasswordSso($request)
+    {
+
+        $password =  $request->password;
+        $token = $request->session()->get('auth.token');
+
+        $data['password'] = $password;
+        if ($token) {
+            $data['token'] = $token;
+        }
+        $sso_cek = Http::timeout(config('SsoConfig.curl.TIMEOUT', 30))->withOptions([
+            'verify' => config('SsoConfig.curl.VERIFY', false),
+        ])->post(config('SsoConfig.main.URL', url('/')) . 'set_password', $data);
+
+        $sso_respond = $sso_cek->object();
+        if ($sso_respond->status == 'sukses') {
+            $respon = [
+                'success' => true,
+                'message' => 'Password changed successfully',
+            ];
+            $code = 200;
+        } else {
+            $respon = [
+                'success' => false,
+                'message' => 'Password changed failed',
+                'errors' => $sso_respond->data
+            ];
+            $code = 401;
+        }
+        $return['respon'] = $respon;
+        $return['code'] = $code;
+        return $return;
+    }
+
 
     public function sessionSet($token)
     {
@@ -468,6 +502,12 @@ class SsoController extends Controller
                     abort(403, $response);
                 }
             }
+
+            $request->setLaravelSession(session());//fix kalo session ga kedetek
+            // if ($request->hasSession()) {
+                $request->session()->put('auth.token', $request->token);
+                $request->session()->put('auth.user', $user);
+            // }
             $redirectTo = '/' . $route;
             // dd($redirectTo,$loggedInUser->toArray(),1);
             return redirect($redirectTo);
