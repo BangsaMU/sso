@@ -1,6 +1,6 @@
 <?php
 
-namespace Bangsamu\Sso;
+namespace Bangsamu\Sso\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -23,7 +23,7 @@ use App\Models\Session;
 
 use Illuminate\Encryption\Encrypter;
 
-class SsoControllerOld
+class SsoCrulController
 {
     public $CHAT_ID;
     public $param;
@@ -34,6 +34,30 @@ class SsoControllerOld
         $this->param = $param;
     }
 
+    function ssoCrul($action, $param = null, $token = null)
+    {
+        dd(1);
+        // Send user/password to the login page so that we get new cookies.
+        $curl = curl_init('http://ams-meindo.test/login');
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($curl, CURLOPT_COOKIEJAR, '/tmp/cookies'); // cookies get stored in this file
+        curl_setopt($curl, CURLOPT_POSTFIELDS, [
+            'email' => 'hatur.cms@gmail.com',
+            'password' => '11111111',
+            '_token' => '9gaeZ69hZry512mh6gVlE9EPKKf5QorIxV0pGtwe',
+        ]);
+        // curl_setopt(...);
+        curl_exec($curl);
+        curl_close($curl);
+
+        // Send the cookies we just saved to the data page you want
+        $curl = curl_init('http://ams-meindo.test/home');
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($curl, CURLOPT_COOKIEFILE, '/tmp/cookies'); // cookies in this file get sent
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        // curl_setopt(...);
+        $page = curl_exec($curl);
+    }
     /**
      * Fungsi untuk setup ke url api telgram
      *
@@ -42,6 +66,7 @@ class SsoControllerOld
      *
      * @return string berisi return full url untuk akses ke api telegram
      */
+
     function loginSso($action, $param = null, $token = null)
     {
         $param_segment = isset($param) ? $param . '/' : '';
@@ -278,7 +303,8 @@ class SsoControllerOld
         return $return;
     }
 
-    public function forgot(Request $request){
+    public function forgot(Request $request)
+    {
 
         $data = $request->all();
         $data['app_url'] = url('/');
