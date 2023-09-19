@@ -463,15 +463,11 @@ class SsoController extends Controller
     public function sessionSet($token)
     {
         try {
-            // $user_id =  $token ? Crypt::decryptString($token) : null;
             $request = new Request([
                 'token'   => $token,
             ]);
             $token = $request->token ? self::token($request) : false;
-            // dd($token);
-            // bagas.setyonugroho@meindo.com
             $user = @(object)$token['decryptedFromString'];
-            $loginbyId = user::where('email', $user->email)->first();
         } catch (\Exception $e) {
             $data['status'] =   'gagal';
             $data['code'] =   101;
@@ -480,8 +476,9 @@ class SsoController extends Controller
         }
 
         $route = 'home';
-        if ($loginbyId) {
-            $user_id =  $loginbyId->id;
+        if ($user) {
+            $loginbyId = user::where('email', $user->email)->first();
+            $user_id =  $loginbyId->id ?? null;
             // Manually Logging a user (Here is successfully recieve the user id)
             $loggedInUser = Auth::loginUsingId($user_id);
             // dd($loggedInUser);
@@ -503,16 +500,14 @@ class SsoController extends Controller
                 }
             }
 
-            $request->setLaravelSession(session());//fix kalo session ga kedetek
+            $request->setLaravelSession(session()); //fix kalo session ga kedetek
             // if ($request->hasSession()) {
-                $request->session()->put('auth.token', $request->token);
-                $request->session()->put('auth.user', $user);
+            $request->session()->put('auth.token', $request->token);
+            $request->session()->put('auth.user', $user);
             // }
             $redirectTo = '/' . $route;
             // dd($redirectTo,$loggedInUser->toArray(),1);
             return redirect($redirectTo);
-            // return $redirectTo;
-            // return true;
         } else {
             $data['status'] =   'gagal';
             $data['code'] =   101;
