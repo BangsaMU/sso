@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('mud', function () {
+Route::get('mud-sso', function () {
     $value = config('SsoConfig.main.APP_CODE');
     echo 'Hello from the sso package!' . json_encode($value);
 });

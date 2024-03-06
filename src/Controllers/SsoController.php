@@ -379,9 +379,14 @@ class SsoController extends Controller
             if ($token) {
                 $data['token'] = $token;
             }
-            $response = Http::timeout(config('SsoConfig.curl.TIMEOUT', 30))->withOptions([
-                'verify' => config('SsoConfig.curl.VERIFY', false),
-            ])->post(config('SsoConfig.main.URL', url('/')) . 'auth_login', $data);
+            try {
+                $response = Http::timeout(config('SsoConfig.curl.TIMEOUT', 30))->withOptions([
+                    'verify' => config('SsoConfig.curl.VERIFY', false),
+                ])->post(config('SsoConfig.main.URL', url('/')) . 'auth_login', $data);
+            } catch (\Exception $e) {
+                Log::info('user: sys url: ' . url()->current() . ' message:' . $e->getMessage());
+                return null;
+            }
 
             $data['password'] = '******';
             Log::info('user: sys url: ' . url()->current() . ' message: SSO login request :' . json_encode($data));
@@ -483,19 +488,20 @@ class SsoController extends Controller
             $loggedInUser = Auth::loginUsingId($user_id);
             // dd($loggedInUser);
             if (!$loggedInUser || $loggedInUser->is_active == 0) {
-                // $data['id'] = $user->id;
-                $data['name'] = $user->name;
-                $data['email'] = $user->email;
-                $data['is_active'] = $user->is_active;
-                $data['password'] = \Hash::make($request->password);
-                // $register = new RegisterController;
-                $create_user = self::create($data);
-                if ($create_user) {
+
+                if (!$loggedInUser) {
+                    // $data['id'] = $user->id;
+                    $data['name'] = $user->name;
+                    $data['email'] = $user->email;
+                    $data['is_active'] = $user->is_active;
+                    $data['password'] = \Hash::make($request->password);
+                    // $register = new RegisterController;
+                    $create_user = self::create($data);
                     $user_id =  $create_user->id;
                     Auth::loginUsingId($user_id);
                 } else {
-                    //reset password
-                    $response = 'Your account has not been registered, please contact the administrator';
+                    //user inactive
+                    $response = 'Please contact the administrator';
                     abort(403, $response);
                 }
             }
