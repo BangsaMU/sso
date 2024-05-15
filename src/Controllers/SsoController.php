@@ -506,11 +506,13 @@ class SsoController extends Controller
                 }
             }
 
-            $request->setLaravelSession(session()); //fix kalo session ga kedetek
-            // if ($request->hasSession()) {
-            $request->session()->put('auth.token', $request->token);
-            $request->session()->put('auth.user', $user);
-            // }
+            // $request->setLaravelSession(session()); //fix kalo session ga kedetek
+            if ($request->hasSession()) {
+                $request->session()->put('auth.token', $request->token);
+                $request->session()->put('auth.user', $user);
+            } else {
+                return 'no session';
+            }
             $redirectTo = '/' . $route;
             // dd($redirectTo,$loggedInUser->toArray(),1);
             return redirect($redirectTo);
