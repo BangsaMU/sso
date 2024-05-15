@@ -510,8 +510,6 @@ class SsoController extends Controller
             if ($request->hasSession()) {
                 $request->session()->put('auth.token', $request->token);
                 $request->session()->put('auth.user', $user);
-            } else {
-                return 'no session';
             }
             $redirectTo = '/' . $route;
             // dd($redirectTo,$loggedInUser->toArray(),1);
