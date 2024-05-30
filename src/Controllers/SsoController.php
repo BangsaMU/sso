@@ -480,7 +480,7 @@ class SsoController extends Controller
             return self::setOutput($data);
         }
 
-        $route = 'home';
+        $route = config('SsoConfig.main.LANDING_PAGE','home');
         if ($user) {
             $loginbyId = user::where('email', $user->email)->first();
             $user_id =  $loginbyId->id ?? null;

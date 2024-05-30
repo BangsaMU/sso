@@ -12,5 +12,6 @@ return [
         'TOKEN' => '', /*auth untuk masuk ke sytem api sso*/
         'URL' => env('SSO_URL', 'http://sso.test'), /*harus diakhiri dengan / (slash) url untuk login SSO*/
         'CALL_BACK' => '',
+        'LANDING_PAGE' => 'dashboard',
     ),
 ];
