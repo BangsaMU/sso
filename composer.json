@@ -3,7 +3,9 @@
     "description": "login menggunakan sso sendiri",
     "type": "library",
     "license": "MIT",
-    "require": {},
+    "require": {
+        "laravel/ui": "^4.5"
+    },
     "autoload": {
         "psr-4": {
             "Bangsamu\\Sso\\": "src/"
