@@ -736,7 +736,7 @@ class SsoController extends Controller
             return self::setOutput($data);
         }
 
-        $route = config('SsoConfig.main.LANDING_PAGE','home');
+        $route = config('SsoConfig.main.LANDING_PAGE','');
         if ($user) {
             $loginbyId = user::where('email', $user->email)->first();
             $user_id =  $loginbyId->id ?? null;
@@ -757,6 +757,9 @@ class SsoController extends Controller
                     Auth::loginUsingId($user_id);
                 } else {
                     //user inactive
+
+                    Log::warning('user: sys url: ' . url()->current() . ' user inactive log respond :' . json_encode($loggedInUser));
+
                     $response = 'Please contact the administrator';
                     abort(403, $response);
                 }
