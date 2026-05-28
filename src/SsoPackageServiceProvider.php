@@ -53,6 +53,17 @@ class SsoPackageServiceProvider extends ServiceProvider
         ], 'sso-config'); // <--- Tambahkan tag 'sso-config' di sini
         // php artisan vendor:publish --tag=sso-config
 
+        // =========================================================================
+        // TAMBAHKAN INI: Publish Assets (CSS & JS Tabler)
+        // Diasumsikan file asli ada di folder package Anda: /resources/assets/css/ dst.
+        // =========================================================================
+        $this->publishes([
+            __DIR__.'/../resources/assets/css/tabler.min.css' => public_path('tabler.min.css'),
+            __DIR__.'/../resources/assets/js/tabler.min.js'   => public_path('tabler.min.js'),
+        ], 'sso-assets');
+        // php artisan vendor:publish --tag=sso-assets
+
+
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'sso');
 
         $this->publishes([
