@@ -11,9 +11,9 @@ Route::get('mud-view', function () {
     return view('sso::mud');
 });
 
-Route::get('getIp', function () {
-    return view('sso::mud');
-});
+// Route::get('dashboard', function () {
+//     return view('sso::mud');
+// })->name('dashboard');
 
 
 Route::get('get-ip',  [Bangsamu\Sso\Controllers\SsoCrulController::class, 'getIp'])
@@ -23,9 +23,9 @@ Route::get('get-ip2',  [Bangsamu\Sso\Controllers\SsoController::class, 'getIp'])
     ->name('get-ip2');
 
 Route::middleware(['web'])->group(function () {
-    Route::get('login', [Bangsamu\Sso\Controllers\SsoController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [Bangsamu\Sso\Controllers\SsoController::class, 'login']);
-    Route::post('logout', [Bangsamu\Sso\Controllers\SsoController::class, 'logout'])->name('logout');
+    // Route::get('login', [Bangsamu\Sso\Controllers\SsoController::class, 'showLoginForm'])->name('login');
+    // Route::post('login', [Bangsamu\Sso\Controllers\SsoController::class, 'login']);
+    // Route::post('logout', [Bangsamu\Sso\Controllers\SsoController::class, 'logout'])->name('logout');
 
     Route::get('/session-cek', [Bangsamu\Sso\Controllers\SsoController::class, 'sessionCek'])
         ->name('session-cek');
@@ -43,3 +43,5 @@ Route::middleware(['web'])->group(function () {
 
 Route::get('session-crul',  [Bangsamu\Sso\Controllers\SsoCrulController::class, 'ssoCrul'])
     ->name('session-crul');
+
+require __DIR__.'/auth.php';

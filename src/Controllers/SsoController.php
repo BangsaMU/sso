@@ -50,7 +50,8 @@ class SsoController extends Controller
      */
     public function showLoginForm()
     {
-        return view('sso::login');
+        $_theme =  env('APP_THEMES')??'';
+        return view('sso::login'.$_theme);
     }
 
     /**
@@ -570,12 +571,20 @@ class SsoController extends Controller
     public function reset(Request $request)
     {
         $data = $request->all();
+        $logData = $data;
+        if (isset($logData['password'])) {
+            $logData['password'] = '********';
+        }
+        if (isset($logData['password_confirmation'])) {
+            $logData['password_confirmation'] = '********';
+        }
+
         // dd($data, config('SsoConfig.main.URL', url('/')) . 'forgot_password');
         $response = Http::timeout(config('SsoConfig.curl.TIMEOUT', 30))->withOptions([
             'verify' => config('SsoConfig.curl.VERIFY', false),
         ])->post(config('SsoConfig.main.URL', url('/')) . 'update_password', $data);
 
-        Log::info('user: sys url: ' . url()->current() . ' message: SSO login request :' . json_encode($data));
+        Log::info('user: sys url: ' . url()->current() . ' message: SSO reset request :' . json_encode($logData));
 
         if ($response->ok()) {
             $token = $data['token'];
@@ -592,7 +601,7 @@ class SsoController extends Controller
             $respond = false;
         }
 
-        Log::info('user: sys url: ' . url()->current() . ' message: SSO login respond :' . json_encode($data));
+        Log::info('user: sys url: ' . url()->current() . ' message: SSO reset respond :' . json_encode($data));
 
         // dd( $response->body());
         return $respond;
