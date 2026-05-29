@@ -18,15 +18,11 @@ class SsoPackageServiceProvider extends ServiceProvider
 
                 'driver' => 'mysql',
 
-                'host' => config('SsoConfig.db_master.host'),
-
-                'port' => config('SsoConfig.db_master.port'),
-
-                'database' => config('SsoConfig.db_master.database'),
-
-                'username' => config('SsoConfig.db_master.username'),
-
-                'password' => config('SsoConfig.db_master.password'),
+                'host'     => config('database.connections.db_master.host') ?? config('ssoconfig.db_master.host'),
+                'port'     => config('database.connections.db_master.port') ?? config('ssoconfig.db_master.port'),
+                'database' => config('database.connections.db_master.database') ?? config('ssoconfig.db_master.database'),
+                'username' => config('database.connections.db_master.username') ?? config('ssoconfig.db_master.username'),
+                'password' => config('database.connections.db_master.password') ?? config('ssoconfig.db_master.password'),
 
                 'charset' => 'utf8mb4',
 

@@ -14,4 +14,11 @@ return [
         'CALL_BACK' => '',
         'LANDING_PAGE' => 'dashboard',
     ),
+    'db_master' => array(
+        'host' => env('DB_HOST_MASTER', '127.0.0.1'),
+        'port' => env('DB_PORT_MASTER', '3306'),
+        'database' => env('DB_DATABASE_MASTER', 'forge'),
+        'username' => env('DB_USERNAME_MASTER', 'forge'),
+        'password' => env('DB_PASSWORD_MASTER', ''),
+    ),
 ];
