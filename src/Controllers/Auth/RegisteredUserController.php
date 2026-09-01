@@ -44,7 +44,10 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
-        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE','home');
-        return redirect(route($LANDING_PAGE, absolute: false));
+        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE', 'home');
+        $target = \Illuminate\Support\Facades\Route::has($LANDING_PAGE)
+            ? route($LANDING_PAGE, absolute: false)
+            : (\Illuminate\Support\Facades\Route::has('dashboard') ? route('dashboard', absolute: false) : url($LANDING_PAGE));
+        return redirect($target);
     }
 }

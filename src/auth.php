@@ -40,17 +40,20 @@ Route::middleware('web')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    Route::get('logout', [AuthenticatedSessionController::class, 'logoutGet'])
+        ->name('logout.get');
+
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
-        ->name('password.forgot');
+        ->name('password.request');
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
-        ->name('password.reset');
+        ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
-        ->name('reset.password');
+        ->name('password.reset');
 
     Route::get('password/reset/{token}', [NewPasswordController::class, 'create'])
-        ->name('password.reset:token');
+        ->name('password.reset2');
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
@@ -69,12 +72,11 @@ Route::middleware(['web', 'auth'])->group(function () {
         ->name('verification.send');
 
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
-        ->name('password-confirm');
+        ->name('password.confirm');
 
-    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store'])
-        ->name('password-confirm-store'); 
+    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
-    Route::put('password', [PasswordController::class, 'update'])->name('password-update');
+    Route::put('password', [PasswordController::class, 'update'])->name('password.update');
 
     Route::post('password/force-update', [PasswordController::class, 'forceUpdate'])->name('password.force-update');
 

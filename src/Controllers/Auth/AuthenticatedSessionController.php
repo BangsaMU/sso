@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -21,26 +22,31 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View|RedirectResponse
     {
-        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE','home');
+        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE', 'home');
 
         // jika sudah login
         if (Auth::check()) {
 
-            // jika login via remember me
-            if (Auth::viaRemember()) {
+            //cek permission role jika login diarahkan kemana
+            $role_name = Auth::user()->roles->first()->name ?? null;
 
-                \Log::info('AUTO_LOGIN_VIA_REMEMBER', [
-                    'user_id' => Auth::id(),
-                    'email' => Auth::user()?->email,
-                ]);
+            if ($role_name == 'superadmin') {
+                return redirect()->intended(
+                    Route::has($LANDING_PAGE) ? route($LANDING_PAGE, absolute: false) : (Route::has('dashboard') ? route('dashboard', absolute: false) : url($LANDING_PAGE))
+                );
             }
 
-            return redirect()->intended(
-                route($LANDING_PAGE, absolute: false)
-            );
+            $target = Route::has($LANDING_PAGE)
+                ? route($LANDING_PAGE, absolute: false)
+                : (Route::has('dashboard') ? route('dashboard', absolute: false) : url($LANDING_PAGE));
+
+            return redirect()->intended($target);
         }
 
-        $_theme = config('app.themes') ?? env('APP_THEMES') ?? '_tabler';
+        $_theme = config('app.themes') ?: (env('APP_THEMES') ?: '_tabler');
+        if (!str_starts_with($_theme, '_')) {
+            $_theme = '_' . $_theme;
+        }
         $viewName = 'sso::login' . $_theme;
         if (!view()->exists($viewName)) {
             $viewName = view()->exists('sso::login_meridian')
@@ -363,9 +369,11 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        return redirect()->intended(
-            route($LANDING_PAGE, absolute: false)
-        );
+        $target = Route::has($LANDING_PAGE)
+            ? route($LANDING_PAGE, absolute: false)
+            : (Route::has('dashboard') ? route('dashboard', absolute: false) : url($LANDING_PAGE));
+
+        return redirect()->intended($target);
     }
 
     /**
@@ -376,6 +384,26 @@ class AuthenticatedSessionController extends Controller
         // only allow internal paths
         return str_starts_with($url, '/')
             && !str_starts_with($url, '//');
+    }
+
+    /**
+     * Handle GET request for logout route.
+     * Prevents MethodNotAllowedHttpException.
+     * If not logged in -> redirect to login.
+     * If logged in -> redirect to dashboard / landing page.
+     */
+    public function logoutGet(Request $request): RedirectResponse
+    {
+        if (!Auth::check()) {
+            return Route::has('login') ? redirect()->route('login') : redirect('/login');
+        }
+
+        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE', 'home');
+        $target = Route::has($LANDING_PAGE)
+            ? route($LANDING_PAGE, absolute: false)
+            : (Route::has('dashboard') ? route('dashboard', absolute: false) : url($LANDING_PAGE));
+
+        return redirect($target);
     }
 
     /**

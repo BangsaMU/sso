@@ -14,15 +14,19 @@ class VerifyEmailController extends Controller
      */
     public function __invoke(EmailVerificationRequest $request): RedirectResponse
     {
-        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE','home');
+        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE', 'home');
+        $target = \Illuminate\Support\Facades\Route::has($LANDING_PAGE)
+            ? route($LANDING_PAGE, absolute: false)
+            : (\Illuminate\Support\Facades\Route::has('dashboard') ? route('dashboard', absolute: false) : url($LANDING_PAGE));
+
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route($LANDING_PAGE, absolute: false).'?verified=1');
+            return redirect()->intended($target.'?verified=1');
         }
 
         if ($request->user()->markEmailAsVerified()) {
             event(new Verified($request->user()));
         }
 
-        return redirect()->intended(route($LANDING_PAGE, absolute: false).'?verified=1');
+        return redirect()->intended($target.'?verified=1');
     }
 }
