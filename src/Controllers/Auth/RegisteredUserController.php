@@ -44,7 +44,7 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
+        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE','home');
+        return redirect(route($LANDING_PAGE, absolute: false));
     }
 }

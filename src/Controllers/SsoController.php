@@ -744,8 +744,8 @@ class SsoController extends Controller
             $data['data'] =   $e->getMessage();
             return self::setOutput($data);
         }
-
-        $route = config('SsoConfig.main.LANDING_PAGE','');
+        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE','home');
+        dd(1,$LANDING_PAGE);
         if ($user) {
             $loginbyId = user::where('email', $user->email)->first();
             $user_id =  $loginbyId->id ?? null;
@@ -779,7 +779,7 @@ class SsoController extends Controller
                 $request->session()->put('auth.token', $request->token);
                 $request->session()->put('auth.user', $user);
             }
-            $redirectTo = '/' . $route;
+            $redirectTo = '/' . $LANDING_PAGE;
             // dd($redirectTo,$loggedInUser->toArray(),1);
             return redirect($redirectTo);
         } else {
@@ -823,9 +823,9 @@ class SsoController extends Controller
         // dd($user_id);
 
         if (Auth::id() == $user_id) {
-            $route = 'login';
+            $LANDING_PAGE = 'login';
             $session = session::where('user_id', $user_id)->delete();
-            $redirectTo = '/' . $route;
+            $redirectTo = '/' . $LANDING_PAGE;
         } else {
             $redirectTo = '/';
         }

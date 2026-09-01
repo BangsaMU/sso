@@ -21,6 +21,8 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View|RedirectResponse
     {
+        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE','home');
+
         // jika sudah login
         if (Auth::check()) {
 
@@ -34,12 +36,18 @@ class AuthenticatedSessionController extends Controller
             }
 
             return redirect()->intended(
-                route('dashboard', absolute: false)
+                route($LANDING_PAGE, absolute: false)
             );
         }
 
-        $_theme =  env('APP_THEMES')??'_tabler';
-        return view('sso::login'.$_theme);
+        $_theme = config('app.themes') ?? env('APP_THEMES') ?? '_tabler';
+        $viewName = 'sso::login' . $_theme;
+        if (!view()->exists($viewName)) {
+            $viewName = view()->exists('sso::login_meridian')
+                ? 'sso::login_meridian'
+                : (view()->exists('sso::login_tabler') ? 'sso::login_tabler' : 'sso::login');
+        }
+        return view($viewName);
     }
     /**
      * Handle an incoming authentication request.
@@ -48,6 +56,8 @@ class AuthenticatedSessionController extends Controller
         LoginRequest $request,
         SsoAuthService $ssoAuthService
     ): RedirectResponse {
+
+        $LANDING_PAGE = config('SsoConfig.main.LANDING_PAGE','home');
 
         $email = trim(strtolower($request->email));
         $password = $request->password;
@@ -354,7 +364,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         return redirect()->intended(
-            route('dashboard', absolute: false)
+            route($LANDING_PAGE, absolute: false)
         );
     }
 
