@@ -36,6 +36,9 @@ class SsoController extends Controller
     public $CHAT_ID;
     public $param;
 
+    /** Status HTTP jawaban server SSO terakhir dari forgot() / reset(); null = belum ada jawaban (mis. timeout). */
+    public ?int $lastHttpStatus = null;
+
     function __construct($CHAT_ID = null, $param = null)
     {
         $this->CHAT_ID = $CHAT_ID ?? config('SsoConfig.main.CHAT_ID', '-1001983435070');
@@ -555,6 +558,8 @@ class SsoController extends Controller
 
         Log::info('user: sys url: ' . url()->current() . ' message: SSO forgot request :' . json_encode($data));
 
+        $this->lastHttpStatus = $response->status();
+
         if ($response->ok()) {
             $data = $response->object();
             $respond =  self::ssoRespond($response);
@@ -585,6 +590,8 @@ class SsoController extends Controller
         ])->post(config('SsoConfig.main.URL', url('/')) . 'update_password', $data);
 
         Log::info('user: sys url: ' . url()->current() . ' message: SSO reset request :' . json_encode($logData));
+
+        $this->lastHttpStatus = $response->status();
 
         if ($response->ok()) {
             $token = $data['token'];

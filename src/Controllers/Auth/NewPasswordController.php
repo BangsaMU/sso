@@ -15,6 +15,8 @@ use Illuminate\View\View;
 
 // ADD THIS: Import the SSO Controller
 use Bangsamu\Sso\Controllers\SsoController;
+use Bangsamu\Sso\Support\SsoOutage;
+use Illuminate\Http\Client\ConnectionException;
 
 class NewPasswordController extends Controller
 {
@@ -46,6 +48,16 @@ class NewPasswordController extends Controller
 
                 // Attempt to reset password via SSO
                 $ssoResponse = $sso->reset($request);
+
+                // server SSO menjawab error (bukan HTTP 200): dulu "SSO password reset failed" tanpa penjelasan
+                if ($ssoResponse === false) {
+                    $failureCount = SsoOutage::recordFailure('update_password', 'Server SSO menjawab HTTP '.($sso->lastHttpStatus ?? '?').' (bukan 200).');
+
+                    return back()->withInput($request->only('email'))
+                        ->withErrors(['email' => SsoOutage::message($failureCount)]);
+                }
+
+                SsoOutage::recordSuccess();
                 $ssoResult = (object)$ssoResponse;
 
                 // Check if SSO reset was successful
@@ -68,6 +80,12 @@ class NewPasswordController extends Controller
 
                 return redirect()->route('login')->with('status', 'Password reset successful. You can now log in with your new password.');
 
+            } catch (ConnectionException $e) {
+                // server SSO tidak terjangkau (timeout / koneksi ditolak): pesan "coba lagi", lalu "maintenance"
+                $failureCount = SsoOutage::recordFailure('update_password', $e->getMessage());
+
+                return back()->withInput($request->only('email'))
+                    ->withErrors(['email' => SsoOutage::message($failureCount)]);
             } catch (\Exception $e) {
                 \Log::error('SSO password reset failed: ' . $e->getMessage(), [
                     'email' => $validated['email']
