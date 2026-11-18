@@ -8,6 +8,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Throwable;
 
 /**
@@ -196,9 +197,15 @@ class UserMediaClient
         }
         $secret = (string) config('sso_user_media.private_key');
         $bodySha256 = hash('sha256', $file['contents'] ?? $jsonBody ?? '');
-        $kid = UserMediaToken::fingerprint(UserMediaToken::publicKeyFromSecret($secret));
-        $token = UserMediaToken::sign($secret, UserMediaToken::claims($this->appCode(), $method, $path, $bodySha256, $owner, $actor,
-            (int) config('sso_user_media.token_ttl', 50), $kid));
+        try {
+            $kid = UserMediaToken::fingerprint(UserMediaToken::publicKeyFromSecret($secret));
+            $token = UserMediaToken::sign($secret, UserMediaToken::claims($this->appCode(), $method, $path, $bodySha256, $owner, $actor,
+                (int) config('sso_user_media.token_ttl', 50), $kid));
+        } catch (InvalidArgumentException $e) {
+            // kunci terisi tetapi rusak (bukan base64 64 byte): sama dengan belum dikonfigurasi (health tidak ok, upload
+            // dikunci, PDF tanpa cache ditunda), bukan exception yang lolos dan membuat halaman app error 500
+            throw new UserMediaException($e->getMessage(), 'not_configured');
+        }
 
         $url = $this->baseUrl().'/'.$path.($query !== [] ? '?'.http_build_query($query) : '');
         $request = $this->request($token, $timeout, $headers);

@@ -181,4 +181,26 @@ class UserMediaClientTest extends TestCase
         $this->expectException(UserMediaException::class);
         $this->client()->check('signature', 'budi@meindo.com', 'budi@meindo.com', $this->png());
     }
+
+    /* kunci terisi tetapi rusak: perlakuan sama dengan belum dikonfigurasi, bukan InvalidArgumentException (dulu app 500) */
+    public function test_kunci_privat_rusak_dianggap_belum_dikonfigurasi(): void
+    {
+        config(['sso_user_media.private_key' => 'bukan-kunci']);
+        Http::fake();
+
+        $health = $this->client()->health(true);
+        $this->assertFalse($health['ok']);
+        $this->assertStringContainsString('MASTER_APP_PRIVATE_KEY tidak valid', implode(' ', $health['errors']));
+
+        foreach ([fn () => $this->client()->download('signature', 'budi@meindo.com'), fn () => $this->client()->status('budi@meindo.com')] as $call) {
+            try {
+                $call();
+                $this->fail('harus ditolak');
+            } catch (UserMediaException $e) {
+                $this->assertSame('not_configured', $e->reason);
+                $this->assertTrue($e->isUnavailable());
+            }
+        }
+        Http::assertNothingSent();
+    }
 }

@@ -63,6 +63,9 @@ if (! $check['master_exists']) {
 - `UserMediaException`: `reason` = kode Master Data (`replace_requires_confirmation`, `invalid_image`, `owner_inactive`,
   `invalid_token`, …) atau client (`not_configured`, `unreachable`, `unhealthy`). `isUnavailable()` = Master Data tidak
   bisa dipakai: kunci upload; render PDF tanpa cache **ditunda** (job `release`), bukan dicetak tanpa tanda tangan (K3).
+  `MASTER_APP_PRIVATE_KEY` yang terisi tetapi rusak (bukan base64 64 byte) juga `not_configured` (sejak v1.2.1; dulu
+  `InvalidArgumentException` lolos dari client dan halaman app error 500); health memuat pesan "MASTER_APP_PRIVATE_KEY
+  tidak valid", buat ulang dengan `php artisan sso:app-key --write --force`.
 - Sesudah commit, perbarui cache: `UserMediaCache::path($type, $email, true)` (atau `remember()` dengan PNG preview).
 
 ### Komponen Blade (Bootstrap 4 atau 5)
