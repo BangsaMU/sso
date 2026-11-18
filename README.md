@@ -78,13 +78,31 @@ if (! $check['master_exists']) {
 
 ### Sinkron gambar lama
 
-`php artisan sso:user-media-sync [--type=] [--email=] [--dry-run] [--yes]` dengan sumber dari aplikasi:
-`config(['sso_user_media.legacy_source' => App\Support\UserMediaLegacySource::class])`, class yang mengimplementasikan
-`Bangsamu\Sso\UserMedia\Contracts\LegacyUserMediaSource` (`items()` = `LegacyUserMedia(email, type, path, localRef)`,
-`markSynced()` = aplikasi beralih ke rujukan Master Data, mis. user_details `app03:signature`). Aturan: Master Data kosong =
-diisi; sama = `markSynced`; berbeda = **tidak ditimpa**, dicatat di `user_media_conflicts` untuk dipilih pemilik akun
-(selama belum dipilih aplikasi tetap memakai gambar lokal); file hilang / bukan gambar / akun tidak ada = laporan. Bucket +
-env tujuan ditampilkan dan wajib dikonfirmasi.
+`php artisan sso:user-media-sync [--type=] [--email=] [--dry-run] [--yes]`. Aturan: Master Data kosong = diisi; sama =
+`markSynced`; berbeda = **tidak ditimpa**, dicatat di `user_media_conflicts` untuk dipilih pemilik akun (selama belum dipilih
+aplikasi tetap memakai gambar lokal); file hilang / bukan gambar / akun tidak ada = dilewati, masuk laporan. Bucket + env
+tujuan ditampilkan dan wajib dikonfirmasi. Mulai dengan `--dry-run`.
+
+**Sumber bawaan (tanpa class buatan aplikasi):** bila `legacy_source` kosong dipakai `Bangsamu\Sso\UserMedia\UserDetailsLegacySource`:
+tabel `user_details` (`field_key` signature / paraf / profile_photo, `field_value` = path file). Yang berbeda antar aplikasi
+diatur lewat config `sso_user_media.legacy` / .env:
+
+| .env | Bawaan | Arti |
+|---|---|---|
+| `USER_MEDIA_LEGACY_ROOTS` | `.,media,app,app/public,disk:media,disk:public` | folder pencarian berurutan (absolut, relatif `storage/`, `.` = `storage/`, `disk:<nama>`); file pertama yang ada dipakai |
+| `USER_MEDIA_LEGACY_EMAIL` | `user_email` | kolom email, atau `users.email` (join `users.id = user_id`) |
+| `USER_MEDIA_LEGACY_PICK` | `latest` | beberapa baris satu jenis: `latest` (id terbesar) / `first` (id terkecil) |
+| `USER_MEDIA_LEGACY_ON_SYNCED` | `keep` | `keep` = nilai lokal tetap; `ref` = diganti `app03:<type>` |
+| `USER_MEDIA_LEGACY_TABLE` | `user_details` | nama tabel |
+
+Path yang tidak ketemu di folder mana pun = "File lokal hilang" (dilewati, bukan error). Bila sebagian besar file tidak
+ketemu, perintah memperingatkan sebelum menulis, lengkap dengan path yang dicari, karena biasanya folder pencariannya yang
+salah. Pekerjaan tambahan setelah sinkron (Activity Log, cache status) cukup lewat listener event
+`Bangsamu\Sso\UserMedia\Events\LegacyUserMediaSynced` (`$item`, `$media`).
+
+**Sumber sendiri** hanya bila gambar disimpan dengan cara lain (base64 di DB, tabel berbeda, S3/URL): `USER_MEDIA_LEGACY_SOURCE`
+/ `legacy_source` = class yang mengimplementasikan `Bangsamu\Sso\UserMedia\Contracts\LegacyUserMediaSource` (`items()` =
+`LegacyUserMedia(email, type, path, localRef, userId, searched)`, `markSynced()`).
 
 ### Rujukan `app03:` di api/getSignature, api/getParaf
 

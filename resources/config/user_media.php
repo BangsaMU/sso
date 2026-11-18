@@ -41,9 +41,33 @@ return [
     // penjaga dev: APP_ENV aplikasi ini bukan production tetapi Master Data menjawab env production = tulis ditolak
     'block_dev_to_production' => true,
 
-    // sumber gambar lama untuk `php artisan sso:user-media-sync`: class yang mengimplementasikan
-    // Bangsamu\Sso\UserMedia\Contracts\LegacyUserMediaSource (disediakan aplikasi, mis. App\Support\SpbUserMediaSource)
-    'legacy_source' => null,
+    // sumber gambar lama untuk `php artisan sso:user-media-sync`. Kosong = sumber bawaan
+    // Bangsamu\Sso\UserMedia\UserDetailsLegacySource (tabel user_details, diatur lewat 'legacy' di bawah). Isi class sendiri
+    // (implements Bangsamu\Sso\UserMedia\Contracts\LegacyUserMediaSource) hanya bila gambar disimpan dengan cara lain
+    // (base64 di DB, tabel berbeda, S3/URL luar).
+    'legacy_source' => env('USER_MEDIA_LEGACY_SOURCE'),
+
+    // pengaturan sumber bawaan (UserDetailsLegacySource)
+    'legacy' => [
+        // tabel + kolom: satu baris per user per jenis (field_key = signature / paraf / profile_photo, field_value = path file)
+        'table' => env('USER_MEDIA_LEGACY_TABLE', 'user_details'),
+        'key_column' => 'field_key',
+        'value_column' => 'field_value',
+        // email pemilik: nama kolom di tabel itu, atau 'users.email' (join users.id = user_id) bila kolom email bisa usang
+        'email' => env('USER_MEDIA_LEGACY_EMAIL', 'user_email'),
+        'user_id_column' => 'user_id',
+        'users_table' => 'users',
+        // baris terhapus (kolom tidak ada = diabaikan)
+        'soft_delete_column' => 'deleted_at',
+        // user punya beberapa baris satu jenis: latest = id terbesar, first = id terkecil
+        'pick' => env('USER_MEDIA_LEGACY_PICK', 'latest'),
+        // folder tempat path dicari berurutan, file pertama yang ada dipakai: absolut, relatif storage/ ('.' = storage/ itu
+        // sendiri), atau disk:<nama>. Pisah koma di .env. Bawaan mencakup /media/... relatif storage/ dan disk media.
+        'roots' => env('USER_MEDIA_LEGACY_ROOTS', '.,media,app,app/public,disk:media,disk:public'),
+        // setelah sama / diisi: keep = nilai lokal tetap (aplikasi memakai file sendiri), ref = diganti 'app03:<type>'
+        'on_synced' => env('USER_MEDIA_LEGACY_ON_SYNCED', 'keep'),
+        'ref_prefix' => 'app03:',
+    ],
 
     // halaman aplikasi untuk memilih gambar saat konflik (banner konflik), mis. route('profile.media')
     'conflict_url' => null,
