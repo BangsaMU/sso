@@ -2,9 +2,14 @@
 
 namespace Bangsamu\Sso;
 
-use Illuminate\Support\ServiceProvider;
 use Bangsamu\Master\Models\DashboardSettings;
+use Bangsamu\Sso\UserMedia\Commands\AppKeyCommand;
+use Bangsamu\Sso\UserMedia\Commands\UserMediaSyncCommand;
+use Bangsamu\Sso\UserMedia\MasterUserMediaResolver;
+use Bangsamu\Sso\UserMedia\UserMediaCache;
+use Bangsamu\Sso\UserMedia\UserMediaClient;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class SsoPackageServiceProvider extends ServiceProvider
 {
@@ -13,6 +18,15 @@ class SsoPackageServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // gambar user Master Data (signature, paraf, foto profil): client API + cache lokal, config('sso_user_media.*')
+        $this->mergeConfigFrom(__DIR__.'/../resources/config/user_media.php', 'sso_user_media');
+        $this->app->singleton(UserMediaClient::class);
+        $this->app->singleton(UserMediaCache::class);
+        // api/getSignature + api/getParaf paket bangsamu/master membaca rujukan "app03:" lewat cache ini (bila master mendukung)
+        if (interface_exists(\Bangsamu\Master\Contracts\UserMediaResolver::class)) {
+            $this->app->singleton(\Bangsamu\Master\Contracts\UserMediaResolver::class, MasterUserMediaResolver::class);
+        }
+
         config([
             'database.connections.db_master' => [
 
@@ -73,6 +87,17 @@ class SsoPackageServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/routes.php' => base_path('routes/sso.php'),
         ]);
+
+        // gambar user Master Data: config, tabel konflik lokal, perintah kunci API + sinkron data lama
+        $this->publishes([
+            __DIR__.'/../resources/config/user_media.php' => config_path('sso_user_media.php'),
+        ], 'sso-user-media');
+        $this->publishes([
+            __DIR__.'/../resources/migrations/2026_11_18_000001_create_user_media_conflicts_table.php' => database_path('migrations/2026_11_18_000001_create_user_media_conflicts_table.php'),
+        ], 'sso-user-media-migrations');
+        if ($this->app->runningInConsole()) {
+            $this->commands([AppKeyCommand::class, UserMediaSyncCommand::class]);
+        }
 
         // Tambahkan \Illuminate\Support\Facades\ di depan View
         View::composer('*', function ($view) {
